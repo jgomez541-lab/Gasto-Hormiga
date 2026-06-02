@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Control de Gastos Hormiga 🐜</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  :root {
+    --green-dark: #0d2e1a;
+    --green-main: #1a6b40;
+    --green-light: #2a9e60;
+    --green-pale: #e8f5ee;
+    --green-border: #86efac;
+    --amber: #f59e0b;
+    --amber-bg: #FFF3CD;
+    --amber-border: #FBBF24;
+    --amber-text: #92400e;
+    --red-main: #b91c1c;
+    --red-bg: #FEE2E2;
+    --red-border: #FCA5A5;
+    --red-text: #991b1b;
+    --bg: #ffffff;
+    --bg2: #f5f5f0;
+    --border: rgba(0,0,0,0.12);
+    --text: #1a1a1a;
+    --text2: #6b6b6b;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #e8e8e8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .phone {
+    width: 390px;
+    min-height: 720px;
+    background: var(--bg);
+    border-radius: 40px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.25), 0 0 0 8px #222;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .status-bar {
+    background: var(--green-dark);
+    color: #fff;
+    font-size: 11px;
+    padding: 8px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+  }
+
+  .screen { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
+  .screen.active { display: flex; }
+
+  /* ---- BOTTOM NAV ---- */
+  .bottom-nav {
+    display: none;
+    background: var(--bg);
+    border-top: 0.5px solid var(--border);
+    padding: 8px 0 12px;
+    flex-shrink: 0;
+    justify-content: space-around;
+  }
+  .bottom-nav.visible { display: flex; }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 2px; cursor: pointer; padding: 4px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 10px; color: var(--text2);
+    transition: color 0.15s;
+  }
+  .nav-item i { font-size: 22px; }
+  .nav-item.active { color: var(--green-main); }
+  .nav-item.active i { color: var(--green-main); }
+
+  /* ---- BUTTONS ---- */
+  .btn-primary {
+    background: var(--green-main); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    padding: 15px 24px; font-size: 15px; font-weight: 600;
+    cursor: pointer; width: 100%; transition: opacity 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-secondary {
+    background: var(--bg2); color: var(--text);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 13px 24px; font-size: 14px;
+    cursor: pointer; width: 100%; transition: background 0.15s;
+  }
+  .btn-secondary:hover { background: #e8e8e8; }
+  .btn-danger {
+    background: var(--red-main); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    padding: 15px 24px; font-size: 15px; font-weight: 600;
+    cursor: pointer; width: 100%;
+  }
+
+  /* ---- INPUTS ---- */
+  .field-group { margin-bottom: 16px; }
+  .field-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; font-weight: 500; }
+  .field-input {
+    width: 100%; padding: 13px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg2); color: var(--text);
+    font-size: 15px; font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .field-input:focus { outline: none; border-color: var(--green-main); background: #fff; }
+
+  /* ---- HEADERS ---- */
+  .screen-header {
+    background: var(--green-main); padding: 16px 20px;
+    color: #fff; flex-shrink: 0;
+  }
+  .screen-header h2 { font-size: 18px; font-weight: 600; }
+  .screen-header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+  .header-back { display: flex; align-items: center; gap: 10px; }
+  .back-btn { background: rgba(255,255,255,0.15); border: none; color: #fff; cursor: pointer; font-size: 20px; padding: 6px; border-radius: 8px; line-height: 1; }
+
+  /* ---- SCREEN BODY ---- */
+  .screen-body { padding: 20px; flex: 1; }
+
+  /* ======== SCREEN 1: BIENVENIDA ======== */
+  .welcome-bg {
+    background: linear-gradient(160deg, #0d2e1a 0%, #1a6b40 55%, #2a9e60 100%);
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 48px 32px; gap: 18px;
+  }
+  .logo-circle {
+    width: 90px; height: 90px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 42px;
+  }
+  .app-title { color: #fff; font-size: 24px; font-weight: 700; text-align: center; letter-spacing: -0.5px; }
+  .app-subtitle { color: rgba(255,255,255,0.75); font-size: 14px; text-align: center; line-height: 1.6; }
+  .welcome-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px; padding: 6px 16px;
+    color: rgba(255,255,255,0.9); font-size: 12px;
+  }
+  .welcome-btn {
+    background: #fff; color: var(--green-main);
+    border: none; border-radius: var(--radius-sm);
+    padding: 15px 24px; font-size: 16px; font-weight: 700;
+    cursor: pointer; width: 100%; margin-top: 12px;
+    transition: opacity 0.15s;
+  }
+  .welcome-btn:hover { opacity: 0.9; }
+
+  /* ======== DASHBOARD ======== */
+  .greeting { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .greeting-sub { font-size: 13px; color: var(--text2); margin-bottom: 18px; }
+
+  .budget-card {
+    background: var(--green-main);
+    border-radius: var(--radius);
+    padding: 20px; color: #fff; margin-bottom: 14px;
+  }
+  .budget-label { font-size: 12px; opacity: 0.8; margin-bottom: 6px; }
+  .budget-amount { font-size: 30px; font-weight: 700; margin-bottom: 4px; letter-spacing: -1px; }
+  .budget-avail { font-size: 13px; opacity: 0.8; margin-bottom: 14px; }
+  .progress-track { background: rgba(255,255,255,0.25); border-radius: 10px; height: 10px; margin-bottom: 8px; }
+  .progress-fill { height: 10px; border-radius: 10px; transition: width 0.5s ease; }
+  .progress-ok { background: #fff; }
+  .progress-warn { background: #FFD166; }
+  .progress-danger { background: #FF6B6B; }
+  .budget-pct { font-size: 12px; opacity: 0.85; }
+
+  .alert-banner {
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px; color: var(--amber-text); font-size: 13px;
+    line-height: 1.4;
+  }
+  .alert-banner i { font-size: 20px; flex-shrink: 0; }
+
+  .danger-banner {
+    background: var(--red-bg);
+    border: 1px solid var(--red-border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px; color: var(--red-main); font-size: 13px;
+    line-height: 1.4;
+  }
+  .danger-banner i { font-size: 20px; flex-shrink: 0; }
+
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .stat-card {
+    background: var(--bg2); border-radius: var(--radius-sm); padding: 14px;
+    border: 0.5px solid var(--border);
+  }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+  .stat-value { font-size: 18px; font-weight: 700; }
+
+  /* Expense list */
+  .expense-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .expense-icon {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .expense-info { flex: 1; min-width: 0; }
+  .expense-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .expense-cat { font-size: 12px; color: var(--text2); }
+  .expense-amount { font-size: 15px; font-weight: 700; color: var(--red-main); flex-shrink: 0; }
+
+  /* ======== REGISTRO GASTO ======== */
+  .category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+  .cat-chip {
+    padding: 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg2); cursor: pointer;
+    font-size: 13px; text-align: center;
+    transition: all 0.15s; color: var(--text);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-weight: 500;
+  }
+  .cat-chip:hover { background: #e0e0d8; }
+  .cat-chip.selected { background: var(--green-pale); border-color: var(--green-main); color: var(--green-main); font-weight: 600; }
+  .cat-chip.span2 { grid-column: span 2; }
+
+  /* ======== ALERTA ======== */
+  .alert-screen-body {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 32px 24px; text-align: center; gap: 16px;
+  }
+  .alert-icon-big {
+    width: 88px; height: 88px;
+    background: var(--red-bg); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 42px;
+  }
+  .alert-title { font-size: 20px; font-weight: 700; color: var(--red-main); }
+  .alert-msg { font-size: 14px; color: var(--text2); line-height: 1.6; }
+  .rec-card {
+    background: var(--green-pale); border: 1px solid var(--green-border);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    text-align: left; width: 100%;
+  }
+  .rec-card-title { font-size: 12px; color: #166534; font-weight: 600; margin-bottom: 6px; }
+  .rec-card-text { font-size: 13px; color: #15803d; line-height: 1.5; }
+
+  /* ======== EDUCACIÓN ======== */
+  .tab-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    flex-shrink: 0; background: var(--bg);
+  }
+  .tab-btn {
+    flex: 1; padding: 12px 8px; font-size: 12px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text2); border-bottom: 2px solid transparent;
+    transition: all 0.15s; font-weight: 500;
+  }
+  .tab-btn.active { color: var(--green-main); border-bottom-color: var(--green-main); }
+
+  .tip-card {
+    background: var(--bg2); border-radius: var(--radius);
+    padding: 16px 18px; margin-bottom: 12px;
+    border-left: 3px solid var(--green-main);
+  }
+  .tip-num { font-size: 11px; color: var(--green-main); font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tip-text { font-size: 14px; color: var(--text); line-height: 1.5; }
+
+  .motivation-card {
+    background: var(--green-main); border-radius: var(--radius);
+    padding: 18px; color: #fff; margin-bottom: 12px; text-align: center;
+  }
+  .motivation-quote { font-size: 15px; font-weight: 500; line-height: 1.5; margin-bottom: 6px; font-style: italic; }
+  .motivation-author { font-size: 12px; opacity: 0.75; }
+
+  .flow-wrap { padding: 12px; overflow-x: auto; }
+  .flow-wrap svg { display: block; margin: 0 auto; }
+
+  /* ======== CONFIG ======== */
+  .config-info-box {
+    background: var(--green-pale); border: 1px solid var(--green-border);
+    border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 20px;
+    font-size: 13px; color: #166534; line-height: 1.5;
+  }
+
+  /* Responsive for desktop */
+  @media (max-width: 430px) {
+    body { padding: 0; background: var(--bg); }
+    .phone { width: 100%; min-height: 100vh; border-radius: 0; box-shadow: none; }
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 32px 16px; color: var(--text2);
+  }
+  .empty-state i { font-size: 48px; opacity: 0.3; display: block; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: #1a1a1a; color: #fff; padding: 10px 20px;
+    border-radius: 20px; font-size: 13px; font-weight: 500;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    white-space: nowrap; z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+
+  .section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+
+  .cat-bar { margin-bottom: 10px; }
+  .cat-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .cat-bar-label span:first-child { color: var(--text2); }
+  .cat-bar-label span:last-child { font-weight: 600; color: var(--text); }
+  .cat-bar-track { background: var(--bg2); border-radius: 6px; height: 8px; }
+  .cat-bar-fill { height: 8px; border-radius: 6px; transition: width 0.4s; }
+
+  .badge-ok { background: var(--green-pale); color: var(--green-main); border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+  .badge-warn { background: var(--amber-bg); color: var(--amber-text); border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+  .badge-danger { background: var(--red-bg); color: var(--red-main); border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone">
+  <div class="status-bar">
+    <span id="statusTime">9:41</span>
+    <span style="font-weight:600; letter-spacing:0.2px;">🐜 Gastos Hormiga</span>
+    <span><i class="ti ti-wifi" style="font-size:12px"></i> <i class="ti ti-battery-2" style="font-size:12px"></i></span>
+  </div>
+
+  <!-- ======================== S1: BIENVENIDA ======================== -->
+  <div class="screen active" id="s1">
+    <div class="welcome-bg">
+      <div class="logo-circle">🐜</div>
+      <div class="app-title">Control de Gastos Hormiga</div>
+      <div class="welcome-badge">Para estudiantes trabajadores</div>
+      <div class="app-subtitle">
+        Los gastos hormiga son pequeñas compras diarias que, sin que te des cuenta, se acumulan y afectan tu economía. Toma el control hoy.
+      </div>
+      <button class="welcome-btn" onclick="goto('s2')">Comenzar →</button>
+    </div>
+  </div>
+
+  <!-- ======================== S2: REGISTRO ======================== -->
+  <div class="screen" id="s2">
+    <div class="screen-header">
+      <div class="header-back">
+        <button class="back-btn" onclick="goto('s1')"><i class="ti ti-arrow-left"></i></button>
+        <div><h2>Crear cuenta</h2><p>Únete a Control de Gastos Hormiga</p></div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div class="field-group">
+        <label class="field-label">Nombre completo</label>
+        <input class="field-input" type="text" id="inputNombre" placeholder="Ej. María Camila Restrepo">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Correo electrónico</label>
+        <input class="field-input" type="email" id="inputCorreo" placeholder="correo@ejemplo.com">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Tipo de usuario</label>
+        <select class="field-input" id="inputTipo">
+          <option value="Estudiante trabajador">Estudiante trabajador</option>
+          <option value="Solo estudiante">Solo estudiante</option>
+          <option value="Solo trabajador">Solo trabajador</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Contraseña</label>
+        <input class="field-input" type="password" placeholder="Mínimo 8 caracteres">
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn-primary" onclick="registrarse()">Registrarse</button>
+      </div>
+      <p style="text-align:center; font-size:12px; color:var(--text2); margin-top:16px;">
+        ¿Ya tienes cuenta? <span style="color:var(--green-main);cursor:pointer;">Inicia sesión</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- ======================== S3: CONFIG FINANCIERA ======================== -->
+  <div class="screen" id="s3">
+    <div class="screen-header">
+      <div class="header-back">
+        <button class="back-btn" onclick="goBack_s3()"><i class="ti ti-arrow-left"></i></button>
+        <div><h2>Configuración financiera</h2><p>Define tus límites de gasto</p></div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div class="config-info-box">
+        <i class="ti ti-info-circle" style="font-size:16px; vertical-align:-3px; margin-right:4px;"></i>
+        Define tu límite mensual de gastos hormiga. Recibirás alertas automáticas cuando te acerques al límite.
+      </div>
+      <div class="field-group">
+        <label class="field-label">Límite mensual de gastos hormiga (COP $)</label>
+        <input class="field-input" type="number" id="inputLimite" placeholder="Ej. 200000" min="1000">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Meta de ahorro mensual (opcional)</label>
+        <input class="field-input" type="number" id="inputMeta" placeholder="Ej. 100000" min="0">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Alerta preventiva cuando alcance el</label>
+        <select class="field-input" id="inputUmbral">
+          <option value="70">70% del presupuesto</option>
+          <option value="60">60% del presupuesto</option>
+          <option value="80">80% del presupuesto</option>
+        </select>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn-primary" onclick="guardarConfig()">Guardar configuración</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== S4: DASHBOARD ======================== -->
+  <div class="screen" id="s4">
+    <div class="screen-body" style="padding-top:18px;">
+      <div class="greeting" id="dashGreeting">¡Hola! 👋</div>
+      <div class="greeting-sub" id="dashSub">Cargando...</div>
+
+      <div class="budget-card">
+        <div class="budget-label">Gastos del mes</div>
+        <div class="budget-amount" id="dashGastado">$0</div>
+        <div class="budget-avail" id="dashDisponible">Disponible: — de —</div>
+        <div class="progress-track">
+          <div class="progress-fill progress-ok" id="dashBar" style="width:0%;"></div>
+        </div>
+        <div class="budget-pct" id="dashPct">0% utilizado</div>
+      </div>
+
+      <div id="dashAlerta" style="display:none;"></div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Esta semana</div>
+          <div class="stat-value" id="dashSemana" style="color:var(--red-main);">$0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Gastos registrados</div>
+          <div class="stat-value" id="dashCount" style="color:var(--green-main);">0</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;">
+        <span class="section-title" style="margin-bottom:0;">Últimos gastos</span>
+        <span id="dashBadge" class="badge-ok"></span>
+      </div>
+      <div id="dashLista">
+        <div class="empty-state">
+          <i class="ti ti-receipt-off"></i>
+          <p>Aún no tienes gastos registrados.<br>¡Comienza registrando uno!</p>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;">
+        <button class="btn-primary" onclick="goto('s5')">
+          <i class="ti ti-plus"></i> Registrar gasto
+        </button>
+      </div>
+    </div>
+    <div class="bottom-nav visible">
+      <div class="nav-item active" onclick="goto('s4')"><i class="ti ti-home"></i><span>Inicio</span></div>
+      <div class="nav-item" onclick="goto('s5')"><i class="ti ti-plus-circle"></i><span>Registrar</span></div>
+      <div class="nav-item" onclick="goto('s7')"><i class="ti ti-book-2"></i><span>Aprende</span></div>
+      <div class="nav-item" onclick="goto('s3')"><i class="ti ti-settings"></i><span>Config.</span></div>
+    </div>
+  </div>
+
+  <!-- ======================== S5: REGISTRO GASTO ======================== -->
+  <div class="screen" id="s5">
+    <div class="screen-header">
+      <div class="header-back">
+        <button class="back-btn" onclick="goto('s4')"><i class="ti ti-arrow-left"></i></button>
+        <div><h2>Registrar gasto hormiga</h2><p>Registra cada pequeño gasto</p></div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div class="field-group">
+        <label class="field-label">Fecha</label>
+        <input class="field-input" type="date" id="inputFecha">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Valor del gasto (COP $)</label>
+        <input class="field-input" type="number" id="inputValor" placeholder="Ej. 4500" min="1">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Categoría</label>
+        <div class="category-grid">
+          <div class="cat-chip selected" onclick="selectCat(this)" data-cat="Comida">🍔 Comida</div>
+          <div class="cat-chip" onclick="selectCat(this)" data-cat="Transporte">🚌 Transporte</div>
+          <div class="cat-chip" onclick="selectCat(this)" data-cat="Antojos">🍫 Antojos</div>
+          <div class="cat-chip" onclick="selectCat(this)" data-cat="Ocio">🎮 Ocio</div>
+          <div class="cat-chip span2" onclick="selectCat(this)" data-cat="Otros">📦 Otros</div>
+        </div>
+      </div>
+      <div class="field-group" style="margin-top:16px;">
+        <label class="field-label">Descripción (opcional)</label>
+        <input class="field-input" type="text" id="inputDesc" placeholder="Ej. Café en el descanso">
+      </div>
+      <div style="margin-top:4px; display:flex; gap:10px;">
+        <button class="btn-secondary" onclick="goto('s4')" style="flex:1;">Cancelar</button>
+        <button class="btn-primary" onclick="guardarGasto()" style="flex:2;">Guardar gasto</button>
+      </div>
+    </div>
+    <div class="bottom-nav visible">
+      <div class="nav-item" onclick="goto('s4')"><i class="ti ti-home"></i><span>Inicio</span></div>
+      <div class="nav-item active" onclick="goto('s5')"><i class="ti ti-plus-circle"></i><span>Registrar</span></div>
+      <div class="nav-item" onclick="goto('s7')"><i class="ti ti-book-2"></i><span>Aprende</span></div>
+      <div class="nav-item" onclick="goto('s3')"><i class="ti ti-settings"></i><span>Config.</span></div>
+    </div>
+  </div>
+
+  <!-- ======================== S6: ALERTA ======================== -->
+  <div class="screen" id="s6">
+    <div class="screen-header" style="background:var(--red-main);">
+      <div class="header-back">
+        <button class="back-btn" onclick="goto('s4')"><i class="ti ti-arrow-left"></i></button>
+        <div><h2>¡Alerta de presupuesto!</h2><p>Has superado tu límite mensual</p></div>
+      </div>
+    </div>
+    <div class="alert-screen-body">
+      <div class="alert-icon-big">⚠️</div>
+      <div class="alert-title">Límite alcanzado</div>
+      <div class="alert-msg" id="alertMsg">
+        Has alcanzado o superado tu límite mensual de gastos hormiga.
+      </div>
+      <div class="rec-card">
+        <div class="rec-card-title"><i class="ti ti-bulb" style="font-size:14px; vertical-align:-2px; margin-right:4px;"></i>Recomendación financiera</div>
+        <div class="rec-card-text">
+          Pausa los gastos hormiga por los próximos días. Lleva tu almuerzo de casa, usa la bicicleta o camina distancias cortas, y evita compras por impulso. Pequeños cambios generan grandes ahorros.
+        </div>
+      </div>
+      <div id="alertCats" style="width:100%;"></div>
+      <button class="btn-danger" onclick="goto('s4')">Ver resumen</button>
+      <button class="btn-secondary" onclick="goto('s7')">Ver tips de ahorro</button>
+    </div>
+  </div>
+
+  <!-- ======================== S7: EDUCACIÓN ======================== -->
+  <div class="screen" id="s7">
+    <div class="screen-header">
+      <div class="header-back">
+        <button class="back-btn" onclick="goto('s4')"><i class="ti ti-arrow-left"></i></button>
+        <div><h2>Educación financiera</h2><p>Tips para controlar tus gastos hormiga</p></div>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabTips" onclick="showTab('tips')">Tips</button>
+      <button class="tab-btn" id="tabMot" onclick="showTab('mot')">Motivación</button>
+      <button class="tab-btn" id="tabStats" onclick="showTab('stats')">Mi resumen</button>
+      <button class="tab-btn" id="tabFlujo" onclick="showTab('flujo')">Diagrama</button>
+    </div>
+
+    <div id="panelTips" class="screen-body">
+      <div class="tip-card"><div class="tip-num">💡 TIP 1</div><div class="tip-text">Registra cada gasto hormiga en el momento en que ocurre. La memoria falla y los pequeños gastos se olvidan fácilmente.</div></div>
+      <div class="tip-card"><div class="tip-num">💡 TIP 2</div><div class="tip-text">Prepara tu almuerzo en casa. Comer fuera todos los días puede costarte más de $200.000 mensuales en gastos hormiga.</div></div>
+      <div class="tip-card"><div class="tip-num">💡 TIP 3</div><div class="tip-text">Usa la regla de las 24 horas: si quieres comprar algo impulsivo, espera un día. Si aún lo quieres, evalúa si cabe en tu presupuesto.</div></div>
+      <div class="tip-card"><div class="tip-num">💡 TIP 4</div><div class="tip-text">Clasifica tus gastos por categoría. Así identificarás cuál es tu punto débil y podrás reducirlo conscientemente.</div></div>
+      <div class="tip-card"><div class="tip-num">💡 TIP 5</div><div class="tip-text">Reserva una pequeña cantidad para "antojos" dentro de tu presupuesto. Prohibirte todo lleva al efecto rebote.</div></div>
+    </div>
+
+    <div id="panelMot" class="screen-body" style="display:none;">
+      <div class="motivation-card">
+        <div class="motivation-quote">"Un presupuesto es decirle a tu dinero a dónde ir, en lugar de preguntarte a dónde fue."</div>
+        <div class="motivation-author">— Dave Ramsey</div>
+      </div>
+      <div class="tip-card"><div class="tip-num">🎯 DATO</div><div class="tip-text">Si ahorras solo $5.000 diarios en gastos hormiga, al año tendrás $1.825.000. ¡Eso puede ser un semestre universitario pagado!</div></div>
+      <div class="motivation-card" style="background:#0f5132;">
+        <div class="motivation-quote">"No es cuánto ganas, sino cuánto guardas lo que define tu libertad financiera."</div>
+        <div class="motivation-author">— Robert Kiyosaki</div>
+      </div>
+      <div class="tip-card"><div class="tip-num">🚀 RETO</div><div class="tip-text">Prueba el reto "Sin gastos hormiga" por 7 días. Registra todo, evita compras impulsivas y observa cuánto puedes ahorrar en una semana.</div></div>
+    </div>
+
+    <div id="panelStats" class="screen-body" style="display:none;">
+      <div id="statsContent"></div>
+    </div>
+
+    <div id="panelFlujo" style="display:none; overflow-y:auto;">
+      <div class="flow-wrap">
+        <svg width="100%" viewBox="0 0 680 1020" role="img">
+          <title>Diagrama de flujo</title>
+          <desc>Flujo de la app Control de Gastos Hormiga</desc>
+          <defs>
+            <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+          <!-- START -->
+          <rect x="240" y="20" width="200" height="44" rx="22" fill="#e8e8e4" stroke="#aaa" stroke-width="0.5"/>
+          <text x="340" y="42" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#444">Inicio de la app</text>
+          <line x1="340" y1="64" x2="340" y2="96" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <!-- ¿Tiene cuenta? -->
+          <rect x="210" y="100" width="260" height="50" rx="8" fill="#FFF3CD" stroke="#FBBF24" stroke-width="0.8"/>
+          <text x="340" y="121" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#92400e">¿Tiene cuenta?</text>
+          <text x="340" y="139" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#a16207">Verificar credenciales</text>
+          <text x="510" y="120" text-anchor="start" font-size="12" fill="#888">Sí</text>
+          <line x1="470" y1="125" x2="560" y2="125" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <text x="205" y="112" text-anchor="end" font-size="12" fill="#888">No</text>
+          <line x1="210" y1="125" x2="100" y2="125" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <!-- Registro -->
+          <rect x="20" y="100" width="160" height="50" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="0.8"/>
+          <text x="100" y="121" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#5b21b6">Registro de</text>
+          <text x="100" y="139" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#5b21b6">usuario</text>
+          <line x1="100" y1="150" x2="100" y2="205" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <rect x="20" y="210" width="160" height="50" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="0.8"/>
+          <text x="100" y="231" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#5b21b6">Config. financiera</text>
+          <text x="100" y="249" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#7c3aed">Límite y meta</text>
+          <line x1="100" y1="260" x2="100" y2="290" stroke="#888" stroke-width="1"/>
+          <line x1="100" y1="290" x2="340" y2="290" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <line x1="560" y1="125" x2="560" y2="290" stroke="#888" stroke-width="1"/>
+          <line x1="560" y1="290" x2="470" y2="290" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <!-- Dashboard -->
+          <rect x="210" y="270" width="260" height="50" rx="8" fill="#e1f5ee" stroke="#1a6b40" stroke-width="0.8"/>
+          <text x="340" y="291" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#0d4a2a">Dashboard principal</text>
+          <text x="340" y="309" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#1a6b40">Resumen presupuesto</text>
+          <line x1="340" y1="320" x2="340" y2="355" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <!-- ¿% > umbral? -->
+          <rect x="200" y="360" width="280" height="50" rx="8" fill="#FFF3CD" stroke="#FBBF24" stroke-width="0.8"/>
+          <text x="340" y="381" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#92400e">¿Gasto ≥ umbral %?</text>
+          <text x="340" y="399" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#a16207">Calcular porcentaje usado</text>
+          <text x="488" y="374" text-anchor="start" font-size="12" fill="#888">Sí</text>
+          <line x1="480" y1="385" x2="570" y2="385" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <rect x="575" y="360" width="90" height="50" rx="8" fill="#FFF3CD" stroke="#FBBF24" stroke-width="0.8"/>
+          <text x="620" y="381" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="600" fill="#92400e">Alerta</text>
+          <text x="620" y="399" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#a16207">preventiva</text>
+          <line x1="620" y1="410" x2="620" y2="470" stroke="#888" stroke-width="1"/>
+          <line x1="620" y1="470" x2="470" y2="470" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <text x="195" y="374" text-anchor="end" font-size="12" fill="#888">No</text>
+          <line x1="200" y1="385" x2="120" y2="385" stroke="#888" stroke-width="1"/>
+          <line x1="120" y1="385" x2="120" y2="460" stroke="#888" stroke-width="1"/>
+          <line x1="120" y1="460" x2="210" y2="460" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <!-- Registrar gasto -->
+          <rect x="210" y="440" width="260" height="50" rx="8" fill="#e1f5ee" stroke="#1a6b40" stroke-width="0.8"/>
+          <text x="340" y="461" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#0d4a2a">Registrar gasto hormiga</text>
+          <text x="340" y="479" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#1a6b40">Fecha, valor, categoría</text>
+          <line x1="340" y1="490" x2="340" y2="525" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <!-- Guardar -->
+          <rect x="210" y="530" width="260" height="50" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="0.8"/>
+          <text x="340" y="551" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#14532d">Guardar en historial</text>
+          <text x="340" y="569" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#15803d">Actualizar acumulado</text>
+          <line x1="340" y1="580" x2="340" y2="615" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <!-- ¿Superó? -->
+          <rect x="200" y="620" width="280" height="50" rx="8" fill="#FFF3CD" stroke="#FBBF24" stroke-width="0.8"/>
+          <text x="340" y="641" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#92400e">¿Superó el límite?</text>
+          <text x="340" y="659" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#a16207">Comparar total con límite</text>
+          <text x="488" y="634" text-anchor="start" font-size="12" fill="#888">Sí</text>
+          <line x1="480" y1="645" x2="570" y2="645" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <rect x="575" y="620" width="90" height="50" rx="8" fill="#FEE2E2" stroke="#f87171" stroke-width="0.8"/>
+          <text x="620" y="641" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="600" fill="#b91c1c">Alerta</text>
+          <text x="620" y="659" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#991b1b">límite total</text>
+          <line x1="620" y1="670" x2="620" y2="720" stroke="#888" stroke-width="1"/>
+          <line x1="620" y1="720" x2="470" y2="720" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <text x="195" y="634" text-anchor="end" font-size="12" fill="#888">No</text>
+          <line x1="200" y1="645" x2="120" y2="645" stroke="#888" stroke-width="1"/>
+          <line x1="120" y1="645" x2="120" y2="720" stroke="#888" stroke-width="1"/>
+          <line x1="120" y1="720" x2="210" y2="720" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <!-- Recomendación -->
+          <rect x="210" y="700" width="260" height="50" rx="8" fill="#e1f5ee" stroke="#1a6b40" stroke-width="0.8"/>
+          <text x="340" y="721" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#0d4a2a">Recomendación financiera</text>
+          <text x="340" y="739" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#1a6b40">+ tips de educación</text>
+          <line x1="340" y1="750" x2="340" y2="785" stroke="#888" stroke-width="1" marker-end="url(#arr2)"/>
+          <!-- Fin/ciclo -->
+          <rect x="240" y="790" width="200" height="44" rx="22" fill="#e8e8e4" stroke="#aaa" stroke-width="0.5"/>
+          <text x="340" y="812" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="600" fill="#444">Volver al dashboard</text>
+          <line x1="240" y1="812" x2="60" y2="812" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="60" y1="812" x2="60" y2="295" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="60" y1="295" x2="208" y2="295" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+          <text x="52" y="555" text-anchor="end" font-size="11" fill="#aaa">ciclo</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bottom-nav visible">
+      <div class="nav-item" onclick="goto('s4')"><i class="ti ti-home"></i><span>Inicio</span></div>
+      <div class="nav-item" onclick="goto('s5')"><i class="ti ti-plus-circle"></i><span>Registrar</span></div>
+      <div class="nav-item active" onclick="goto('s7')"><i class="ti ti-book-2"></i><span>Aprende</span></div>
+      <div class="nav-item" onclick="goto('s3')"><i class="ti ti-settings"></i><span>Config.</span></div>
+    </div>
+  </div>
+
+</div><!-- end phone -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== ESTADO GLOBAL ======
+const APP = {
+  usuario: { nombre: '', correo: '', tipo: '' },
+  config: { limite: 0, meta: 0, umbral: 70 },
+  gastos: [],
+  catSelected: 'Comida'
+};
+
+const CAT_ICONS = { Comida:'🍔', Transporte:'🚌', Antojos:'🍫', Ocio:'🎮', Otros:'📦' };
+const CAT_COLORS = { Comida:'#FEE2E2', Transporte:'#DBEAFE', Antojos:'#FEF9C3', Ocio:'#EDE9FE', Otros:'#F3F4F6' };
+const CAT_BAR_COLORS = { Comida:'#ef4444', Transporte:'#3b82f6', Antojos:'#f59e0b', Ocio:'#8b5cf6', Otros:'#6b7280' };
+
+// Clock
+function updateClock() {
+  const d = new Date();
+  document.getElementById('statusTime').textContent =
+    d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// Set today date on form
+document.getElementById('inputFecha').value = new Date().toISOString().split('T')[0];
+
+// ====== NAVEGACIÓN ======
+function goto(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 's4') actualizarDashboard();
+  if (id === 's6') actualizarAlerta();
+  if (id === 's7' && document.getElementById('panelStats').style.display !== 'none') actualizarStats();
+}
+
+function goBack_s3() {
+  if (APP.usuario.nombre) goto('s4'); else goto('s2');
+}
+
+// ====== REGISTRO ======
+function registrarse() {
+  const nombre = document.getElementById('inputNombre').value.trim();
+  const correo = document.getElementById('inputCorreo').value.trim();
+  if (!nombre) { showToast('Por favor ingresa tu nombre'); return; }
+  APP.usuario.nombre = nombre;
+  APP.usuario.correo = correo;
+  APP.usuario.tipo = document.getElementById('inputTipo').value;
+  goto('s3');
+}
+
+// ====== CONFIG ======
+function guardarConfig() {
+  const lim = parseFloat(document.getElementById('inputLimite').value);
+  if (!lim || lim < 1000) { showToast('Ingresa un límite válido (mínimo $1.000)'); return; }
+  APP.config.limite = lim;
+  APP.config.meta = parseFloat(document.getElementById('inputMeta').value) || 0;
+  APP.config.umbral = parseInt(document.getElementById('inputUmbral').value);
+  showToast('✅ Configuración guardada');
+  goto('s4');
+}
+
+// ====== CATEGORÍA ======
+function selectCat(el) {
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  APP.catSelected = el.dataset.cat;
+}
+
+// ====== GUARDAR GASTO ======
+function guardarGasto() {
+  const valor = parseFloat(document.getElementById('inputValor').value);
+  const fecha = document.getElementById('inputFecha').value;
+  const desc = document.getElementById('inputDesc').value.trim();
+  if (!valor || valor <= 0) { showToast('Ingresa un valor válido'); return; }
+  if (!fecha) { showToast('Selecciona una fecha'); return; }
+  if (APP.config.limite === 0) { showToast('Primero configura tu límite mensual'); goto('s3'); return; }
+
+  APP.gastos.unshift({
+    id: Date.now(),
+    valor,
+    fecha,
+    cat: APP.catSelected,
+    desc: desc || APP.catSelected,
+    hora: new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'})
+  });
+
+  document.getElementById('inputValor').value = '';
+  document.getElementById('inputDesc').value = '';
+  document.getElementById('inputFecha').value = new Date().toISOString().split('T')[0];
+
+  const total = totalMes();
+  const pct = APP.config.limite > 0 ? (total / APP.config.limite) * 100 : 0;
+
+  if (pct >= 100) {
+    showToast('⚠️ ¡Has superado tu límite!');
+    setTimeout(() => goto('s6'), 800);
+  } else {
+    showToast('✅ Gasto registrado');
+    setTimeout(() => goto('s4'), 600);
+  }
+}
+
+// ====== CÁLCULOS ======
+function totalMes() {
+  const now = new Date();
+  const mes = now.getMonth(); const anio = now.getFullYear();
+  return APP.gastos
+    .filter(g => { const d = new Date(g.fecha + 'T00:00:00'); return d.getMonth() === mes && d.getFullYear() === anio; })
+    .reduce((s, g) => s + g.valor, 0);
+}
+
+function totalSemana() {
+  const now = new Date();
+  const lunes = new Date(now); lunes.setDate(now.getDate() - now.getDay() + 1); lunes.setHours(0,0,0,0);
+  return APP.gastos
+    .filter(g => new Date(g.fecha + 'T00:00:00') >= lunes)
+    .reduce((s, g) => s + g.valor, 0);
+}
+
+function porCategoria() {
+  const cats = {};
+  const now = new Date(); const mes = now.getMonth(); const anio = now.getFullYear();
+  APP.gastos
+    .filter(g => { const d = new Date(g.fecha + 'T00:00:00'); return d.getMonth() === mes && d.getFullYear() === anio; })
+    .forEach(g => { cats[g.cat] = (cats[g.cat] || 0) + g.valor; });
+  return cats;
+}
+
+function fmt(n) {
+  return '$' + Math.round(n).toLocaleString('es-CO');
+}
+
+// ====== DASHBOARD ======
+function actualizarDashboard() {
+  const nombre = APP.usuario.nombre || 'Usuario';
+  const primer = nombre.split(' ')[0];
+  document.getElementById('dashGreeting').textContent = '¡Hola, ' + primer + '! 👋';
+
+  const now = new Date();
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('dashSub').textContent = meses[now.getMonth()] + ' ' + now.getFullYear() + ' · ' + APP.usuario.tipo;
+
+  const total = totalMes();
+  const lim = APP.config.limite;
+  const disp = lim - total;
+  const pct = lim > 0 ? Math.min((total / lim) * 100, 100) : 0;
+
+  document.getElementById('dashGastado').textContent = fmt(total);
+  document.getElementById('dashDisponible').textContent =
+    lim > 0 ? 'Disponible: ' + fmt(Math.max(disp, 0)) + ' de ' + fmt(lim) : 'Configura tu límite mensual';
+  document.getElementById('dashBar').style.width = pct.toFixed(1) + '%';
+  document.getElementById('dashPct').textContent = pct.toFixed(1) + '% utilizado';
+
+  const bar = document.getElementById('dashBar');
+  bar.className = 'progress-fill';
+  if (pct >= 100) bar.classList.add('progress-danger');
+  else if (pct >= APP.config.umbral) bar.classList.add('progress-warn');
+  else bar.classList.add('progress-ok');
+
+  const alertDiv = document.getElementById('dashAlerta');
+  let badge = document.getElementById('dashBadge');
+  if (lim > 0 && pct >= 100) {
+    alertDiv.style.display = 'block';
+    alertDiv.innerHTML = '<div class="danger-banner"><i class="ti ti-alert-octagon"></i><span>¡Has superado tu límite mensual! Haz clic en "Ver alerta" para recomendaciones.</span></div>';
+    badge.className = 'badge-danger'; badge.textContent = '⚠️ Límite superado';
+  } else if (lim > 0 && pct >= APP.config.umbral) {
+    alertDiv.style.display = 'block';
+    alertDiv.innerHTML = '<div class="alert-banner"><i class="ti ti-alert-triangle"></i><span>Has alcanzado el ' + pct.toFixed(0) + '% de tu presupuesto. ¡Cuidado con los gastos hormiga!</span></div>';
+    badge.className = 'badge-warn'; badge.textContent = '⚡ Alerta activa';
+  } else {
+    alertDiv.style.display = 'none';
+    badge.className = 'badge-ok'; badge.textContent = '✓ En control';
+  }
+
+  document.getElementById('dashSemana').textContent = fmt(totalSemana());
+  document.getElementById('dashCount').textContent = APP.gastos.length;
+
+  const lista = document.getElementById('dashLista');
+  if (APP.gastos.length === 0) {
+    lista.innerHTML = '<div class="empty-state"><i class="ti ti-receipt-off"></i><p>Aún no tienes gastos registrados.<br>¡Comienza registrando uno!</p></div>';
+    return;
+  }
+  lista.innerHTML = APP.gastos.slice(0, 5).map(g => `
+    <div class="expense-item">
+      <div class="expense-icon" style="background:${CAT_COLORS[g.cat] || '#f3f4f6'}">${CAT_ICONS[g.cat] || '📦'}</div>
+      <div class="expense-info">
+        <div class="expense-name">${g.desc}</div>
+        <div class="expense-cat">${g.cat} · ${g.fecha} ${g.hora}</div>
+      </div>
+      <div class="expense-amount">${fmt(g.valor)}</div>
+    </div>`).join('');
+}
+
+// ====== ALERTA ======
+function actualizarAlerta() {
+  const total = totalMes();
+  const lim = APP.config.limite;
+  document.getElementById('alertMsg').innerHTML =
+    'Has alcanzado o superado tu límite mensual de gastos hormiga de <strong>' + fmt(lim) + '</strong>. Tu gasto actual es <strong>' + fmt(total) + '</strong>.';
+
+  const cats = porCategoria();
+  const totalCat = Object.values(cats).reduce((a,b) => a+b, 0);
+  if (totalCat === 0) { document.getElementById('alertCats').innerHTML = ''; return; }
+  let html = '<div style="width:100%; background:var(--red-bg); border:1px solid var(--red-border); border-radius:var(--radius-sm); padding:14px;">';
+  html += '<div style="font-size:12px; color:var(--red-text); font-weight:700; margin-bottom:10px;">📊 Distribución del gasto por categoría</div>';
+  Object.entries(cats).sort((a,b) => b[1]-a[1]).forEach(([cat, val]) => {
+    const pct = ((val / totalCat) * 100).toFixed(0);
+    html += `<div class="cat-bar">
+      <div class="cat-bar-label"><span>${CAT_ICONS[cat]} ${cat}</span><span>${fmt(val)} (${pct}%)</span></div>
+      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%; background:${CAT_BAR_COLORS[cat] || '#888'}"></div></div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('alertCats').innerHTML = html;
+}
+
+// ====== STATS ======
+function actualizarStats() {
+  const total = totalMes();
+  const lim = APP.config.limite;
+  const pct = lim > 0 ? (total / lim * 100).toFixed(1) : '—';
+  const cats = porCategoria();
+  const totalCat = Object.values(cats).reduce((a,b) => a+b, 0);
+  const diasRestantes = new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate() - new Date().getDate();
+
+  let html = '';
+  html += '<div class="stats-row" style="margin-bottom:16px;">';
+  html += `<div class="stat-card"><div class="stat-label">Total mes</div><div class="stat-value" style="color:var(--red-main);">${fmt(total)}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">% del límite</div><div class="stat-value" style="color:${parseFloat(pct)>=100?'var(--red-main)':'var(--green-main)'};">${pct}%</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">Días restantes</div><div class="stat-value">${diasRestantes}</div></div>`;
+  html += `<div class="stat-card"><div class="stat-label">Gastos registrados</div><div class="stat-value" style="color:var(--green-main);">${APP.gastos.length}</div></div>`;
+  html += '</div>';
+
+  if (lim > 0 && diasRestantes > 0) {
+    const disp = Math.max(lim - total, 0);
+    const diario = (disp / diasRestantes).toFixed(0);
+    html += `<div class="config-info-box"><strong>💡 Puedes gastar máximo ${fmt(diario)} por día</strong> los próximos ${diasRestantes} días sin superar tu límite.</div>`;
+  }
+
+  if (APP.config.meta > 0) {
+    const ahorro = Math.max(lim - total, 0);
+    const avanceAhorro = Math.min((ahorro / APP.config.meta) * 100, 100).toFixed(0);
+    html += `<div class="section-title" style="margin-bottom:8px;">Meta de ahorro: ${fmt(APP.config.meta)}</div>`;
+    html += `<div class="budget-card" style="margin-bottom:16px; padding:14px;">`;
+    html += `<div class="budget-label">Progreso hacia tu meta</div>`;
+    html += `<div class="budget-amount">${fmt(ahorro)}</div>`;
+    html += `<div class="progress-track"><div class="progress-fill progress-ok" style="width:${avanceAhorro}%"></div></div>`;
+    html += `<div class="budget-pct">${avanceAhorro}% de tu meta de ahorro</div></div>`;
+  }
+
+  if (totalCat > 0) {
+    html += `<div class="section-title" style="margin-bottom:10px;">Distribución por categoría</div>`;
+    Object.entries(cats).sort((a,b) => b[1]-a[1]).forEach(([cat, val]) => {
+      const p = ((val / totalCat) * 100).toFixed(0);
+      html += `<div class="cat-bar">
+        <div class="cat-bar-label"><span>${CAT_ICONS[cat]} ${cat}</span><span>${fmt(val)} · ${p}%</span></div>
+        <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${p}%; background:${CAT_BAR_COLORS[cat]}"></div></div>
+      </div>`;
+    });
+  } else {
+    html += '<div class="empty-state"><i class="ti ti-chart-bar"></i><p>Aún no hay datos para mostrar.<br>Registra gastos para ver tu resumen.</p></div>';
+  }
+
+  document.getElementById('statsContent').innerHTML = html;
+}
+
+// ====== TABS EDUCACIÓN ======
+function showTab(tab) {
+  ['tips','mot','stats','flujo'].forEach(t => {
+    document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? (t==='flujo'?'block':'block') : 'none';
+  });
+  ['tabTips','tabMot','tabStats','tabFlujo'].forEach(t => document.getElementById(t).classList.remove('active'));
+  const map = {tips:'tabTips', mot:'tabMot', stats:'tabStats', flujo:'tabFlujo'};
+  document.getElementById(map[tab]).classList.add('active');
+  if (tab === 'stats') actualizarStats();
+}
+
+// ====== TOAST ======
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
